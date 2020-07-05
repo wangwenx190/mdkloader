@@ -45,7 +45,7 @@ namespace {
 #else
 #define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) \
     if (!m_lp##funcName) { \
-        qCritical().noquote() << "Failed to resolve symbol" << funcName << ':' << errMsg; \
+        qCritical().noquote() << "Failed to resolve symbol" << #funcName << ':' << errMsg; \
     }
 #endif
 #endif
