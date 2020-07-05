@@ -39,11 +39,22 @@ namespace {
     _MDKLOADER_MDKAPI_##funcName m_lp##funcName = nullptr;
 #endif
 
+#ifndef MDKLOADER_RESOLVE_ERROR
+#ifdef _DEBUG
+#define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) Q_ASSERT_X(m_lp##funcName, __FUNCTION__, errMsg);
+#else
+#define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) \
+    if (!m_lp##funcName) { \
+        qCritical().noquote() << "Failed to resolve symbol" << funcName << ':' << errMsg; \
+    }
+#endif
+#endif
+
 #ifndef MDKLOADER_RESOLVE_MDKAPI
 #define MDKLOADER_RESOLVE_MDKAPI(funcName) \
     if (!m_lp##funcName) { \
         m_lp##funcName = reinterpret_cast<_MDKLOADER_MDKAPI_##funcName>(mdkLib.resolve(#funcName)); \
-        Q_ASSERT_X(m_lp##funcName, __FUNCTION__, qUtf8Printable(mdkLib.errorString())); \
+        MDKLOADER_RESOLVE_ERROR(funcName, qUtf8Printable(mdkLib.errorString())) \
     }
 #endif
 
