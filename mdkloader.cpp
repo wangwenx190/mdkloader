@@ -58,6 +58,18 @@ namespace {
     }
 #endif
 
+#ifndef MDKLOADER_EXECUTE_MDKAPI
+#define MDKLOADER_EXECUTE_MDKAPI(funcName, ...) \
+    if (m_lp##funcName) { \
+        m_lp##funcName(__VA_ARGS__); \
+    }
+#endif
+
+#ifndef MDKLOADER_EXECUTE_MDKAPI_RETURN
+#define MDKLOADER_EXECUTE_MDKAPI_RETURN(funcName, defVal, ...) \
+    return m_lp##funcName ? m_lp##funcName(__VA_ARGS__) : defVal;
+#endif
+
 // global.h
 MDKLOADER_GENERATE_MDKAPI(MDK_javaVM, void *, void *)
 MDKLOADER_GENERATE_MDKAPI(MDK_setLogLevel, void, MDK_LogLevel)
@@ -159,6 +171,14 @@ bool mdkloader_isMdkLoaded()
     return (globalLoaded && mediaInfoLoaded && playerLoaded && videoFrameLoaded);
 }
 
+const char *mdkloader_mdkVersion()
+{
+    // ### TODO:
+    // Return MDK run-time version if loaded, otherwise return hard-coded
+    // version written in the SDK headers.
+    return nullptr;
+}
+
 ///////////////////////////////////////////
 /// MDK
 ///////////////////////////////////////////
@@ -167,96 +187,88 @@ bool mdkloader_isMdkLoaded()
 
 void *MDK_javaVM(void *value)
 {
-    return m_lpMDK_javaVM(value);
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_javaVM, nullptr, value)
 }
 
-void MDK_setLogLevel(MDK_LogLevel value)
-{
-    m_lpMDK_setLogLevel(value);
-}
+void MDK_setLogLevel(MDK_LogLevel value){MDKLOADER_EXECUTE_MDKAPI(MDK_setLogLevel, value)}
 
 MDK_LogLevel MDK_logLevel()
 {
-    return m_lpMDK_logLevel();
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_logLevel, MDK_LogLevel_Debug)
 }
 
 void MDK_setLogHandler(mdkLogHandler value)
 {
-    m_lpMDK_setLogHandler(value);
+    MDKLOADER_EXECUTE_MDKAPI(MDK_setLogHandler, value)
 }
 
 void MDK_setGlobalOptionString(const char *key, const char *value)
 {
-    m_lpMDK_setGlobalOptionString(key, value);
+    MDKLOADER_EXECUTE_MDKAPI(MDK_setGlobalOptionString, key, value)
 }
 
 void MDK_setGlobalOptionInt32(const char *key, int value)
 {
-    m_lpMDK_setGlobalOptionInt32(key, value);
+    MDKLOADER_EXECUTE_MDKAPI(MDK_setGlobalOptionInt32, key, value)
 }
 
 void MDK_setGlobalOptionPtr(const char *key, void *value)
 {
-    m_lpMDK_setGlobalOptionPtr(key, value);
+    MDKLOADER_EXECUTE_MDKAPI(MDK_setGlobalOptionPtr, key, value)
 }
 
 char *MDK_strdup(const char *value)
 {
-    return m_lpMDK_strdup(value);
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_strdup, nullptr, value)
 }
 
 // MediaInfo.h
 
 void MDK_AudioStreamCodecParameters(const mdkAudioStreamInfo *asi, mdkAudioCodecParameters *acp)
 {
-    m_lpMDK_AudioStreamCodecParameters(asi, acp);
+    MDKLOADER_EXECUTE_MDKAPI(MDK_AudioStreamCodecParameters, asi, acp)
 }
 
 bool MDK_AudioStreamMetadata(const mdkAudioStreamInfo *asi, mdkStringMapEntry *sme)
 {
-    return m_lpMDK_AudioStreamMetadata(asi, sme);
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_AudioStreamMetadata, false, asi, sme)
 }
 
 void MDK_VideoStreamCodecParameters(const mdkVideoStreamInfo *vsi, mdkVideoCodecParameters *vcp)
 {
-    m_lpMDK_VideoStreamCodecParameters(vsi, vcp);
+    MDKLOADER_EXECUTE_MDKAPI(MDK_VideoStreamCodecParameters, vsi, vcp)
 }
 
 bool MDK_VideoStreamMetadata(const mdkVideoStreamInfo *vsi, mdkStringMapEntry *sme)
 {
-    return m_lpMDK_VideoStreamMetadata(vsi, sme);
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_VideoStreamMetadata, false, vsi, sme)
 }
 
-bool MDK_MediaMetadata(const mdkMediaInfo *mi, mdkStringMapEntry *sme)
-{
-    return m_lpMDK_MediaMetadata(mi, sme);
-}
+bool MDK_MediaMetadata(const mdkMediaInfo *mi, mdkStringMapEntry *sme){
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_MediaMetadata, false, mi, sme)}
 
 // Player.h
 
 mdkPlayerAPI *mdkPlayerAPI_new()
 {
-    return m_lpmdkPlayerAPI_new();
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(mdkPlayerAPI_new, nullptr)
 }
 
 void mdkPlayerAPI_delete(mdkPlayerAPI **value)
 {
-    m_lpmdkPlayerAPI_delete(value);
+    MDKLOADER_EXECUTE_MDKAPI(mdkPlayerAPI_delete, value)
 }
 
-void MDK_foreignGLContextDestroyed()
-{
-    m_lpMDK_foreignGLContextDestroyed();
-}
+void MDK_foreignGLContextDestroyed(){MDKLOADER_EXECUTE_MDKAPI(MDK_foreignGLContextDestroyed)}
 
 // VideoFrame.h
 
 mdkVideoFrameAPI *mdkVideoFrameAPI_new(int w, int h, MDK_PixelFormat f)
 {
-    return m_lpmdkVideoFrameAPI_new(w, h, f);
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(mdkVideoFrameAPI_new, nullptr, w, h, f)
 }
 
 void mdkVideoFrameAPI_delete(mdkVideoFrameAPI **value)
 {
-    m_lpmdkVideoFrameAPI_delete(value);
+    MDKLOADER_EXECUTE_MDKAPI(mdkVideoFrameAPI_delete, value)
 }
