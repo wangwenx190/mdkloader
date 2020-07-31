@@ -79,6 +79,7 @@ MDKLOADER_GENERATE_MDKAPI(MDK_setGlobalOptionString, void, const char *, const c
 MDKLOADER_GENERATE_MDKAPI(MDK_setGlobalOptionInt32, void, const char *, int)
 MDKLOADER_GENERATE_MDKAPI(MDK_setGlobalOptionPtr, void, const char *, void *)
 MDKLOADER_GENERATE_MDKAPI(MDK_strdup, char *, const char *)
+MDKLOADER_GENERATE_MDKAPI(MDK_version, int)
 // MediaInfo.h
 MDKLOADER_GENERATE_MDKAPI(MDK_AudioStreamCodecParameters,
                           void,
@@ -134,6 +135,7 @@ bool mdkloader_initMdk()
     MDKLOADER_RESOLVE_MDKAPI(MDK_setGlobalOptionInt32)
     MDKLOADER_RESOLVE_MDKAPI(MDK_setGlobalOptionPtr)
     MDKLOADER_RESOLVE_MDKAPI(MDK_strdup)
+    MDKLOADER_RESOLVE_MDKAPI(MDK_version)
     // MediaInfo.h
     MDKLOADER_RESOLVE_MDKAPI(MDK_AudioStreamCodecParameters)
     MDKLOADER_RESOLVE_MDKAPI(MDK_AudioStreamMetadata)
@@ -161,7 +163,7 @@ bool mdkloader_isMdkLoaded()
     const bool globalLoaded = (m_lpMDK_javaVM && m_lpMDK_setLogLevel && m_lpMDK_logLevel
                                && m_lpMDK_setLogHandler && m_lpMDK_setGlobalOptionString
                                && m_lpMDK_setGlobalOptionInt32 && m_lpMDK_setGlobalOptionPtr
-                               && m_lpMDK_strdup);
+                               && m_lpMDK_strdup && m_lpMDK_version);
     const bool mediaInfoLoaded = (m_lpMDK_AudioStreamCodecParameters && m_lpMDK_AudioStreamMetadata
                                   && m_lpMDK_VideoStreamCodecParameters
                                   && m_lpMDK_VideoStreamMetadata && m_lpMDK_MediaMetadata);
@@ -171,12 +173,9 @@ bool mdkloader_isMdkLoaded()
     return (globalLoaded && mediaInfoLoaded && playerLoaded && videoFrameLoaded);
 }
 
-const char *mdkloader_mdkVersion()
+int mdkloader_mdkVersion()
 {
-    // ### TODO:
-    // Return MDK run-time version if loaded, otherwise return hard-coded
-    // version written in the SDK headers.
-    return nullptr;
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_version, MDK_VERSION)
 }
 
 ///////////////////////////////////////////

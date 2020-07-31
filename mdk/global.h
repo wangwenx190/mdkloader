@@ -130,6 +130,9 @@ enum class SeekFlag {
 };
 template<> struct is_flag<SeekFlag> : std::true_type {};
 
+static inline int version() {
+    return MDK_version();
+}
 /*!
   \brief javaVM
   Set/Get current java vm
@@ -212,4 +215,16 @@ public:
         } decoder;
     };
 };
+
+/*!
+  \brief VideoEffect
+  per video renderer effect. set via Player.set(VideoEffect effect, const float&);
+ */
+enum class VideoEffect {
+    Brightness,   /* [-1.0f, 1.0f], default 0 */
+    Contrast,     /* [-1.0f, 1.0f], default 0 */
+    Hue,          /* [-1.0f, 1.0f], default 0 */
+    Saturation,   /* [-1.0f, 1.0f], default 0 */
+};
+
 MDK_NS_END

@@ -32,7 +32,7 @@ void mdkloader_setMdkLibName(const char *value);
 const char *mdkloader_mdkLibName();
 bool mdkloader_initMdk();
 bool mdkloader_isMdkLoaded();
-const char *mdkloader_mdkVersion();
+int mdkloader_mdkVersion();
 
 #ifdef __cplusplus
 }
