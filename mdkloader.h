@@ -35,6 +35,7 @@ MDKLOADER_EXPORT const char *mdkloader_mdkLibName();
 MDKLOADER_EXPORT bool mdkloader_initMdk();
 MDKLOADER_EXPORT bool mdkloader_isMdkLoaded();
 MDKLOADER_EXPORT int mdkloader_mdkVersion();
+MDKLOADER_EXPORT void mdkloader_close();
 
 #ifdef __cplusplus
 }

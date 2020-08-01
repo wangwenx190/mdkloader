@@ -24,7 +24,16 @@
 
 #pragma once
 
-#include <QtCore/qglobal.h>
+#if !defined(Q_DECL_EXPORT) && !defined(Q_DECL_IMPORT)
+#ifdef _MSC_VER // MSVC, Clang-CL and Intel-CL
+#define Q_DECL_EXPORT __declspec(dllexport)
+#define Q_DECL_IMPORT __declspec(dllimport)
+#else // GCC, Clang, ICC and MinGW
+#define Q_DECL_EXPORT __attribute__((visibility("default")))
+#define Q_DECL_IMPORT __attribute__((visibility("default")))
+#define Q_DECL_HIDDEN __attribute__((visibility("hidden")))
+#endif
+#endif
 
 #ifndef MDKLOADER_EXPORT
 #ifdef MDKLOADER_STATIC

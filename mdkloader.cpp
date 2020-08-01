@@ -22,16 +22,42 @@
  * SOFTWARE.
  */
 
-#include "mdkloader.h"
+#if defined(WIN32) || defined(_WIN32) || defined(_WINDOWS)
+#define MDK_WINDOWS
+#else
+#define MDK_UNIX
+#endif
 
+#include "mdkloader.h"
 #include "mdk/c/MediaInfo.h"
 #include "mdk/c/Player.h"
 #include "mdk/c/VideoFrame.h"
 #include "mdk/c/global.h"
-#include <QDebug>
-#include <QLibrary>
+#include <assert.h>
+#include <iostream>
+#ifdef MDK_WINDOWS
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
 
 namespace {
+
+#ifndef MDK_HANDLE
+#ifdef MDK_WINDOWS
+#define MDK_HANDLE HMODULE
+#else
+#define MDK_HANDLE void *
+#endif
+#endif
+
+#ifndef MDKLOADER_GETPROCADDRESS
+#ifdef MDK_WINDOWS
+#define MDKLOADER_GETPROCADDRESS GetProcAddress
+#else
+#define MDKLOADER_GETPROCADDRESS dlsym
+#endif
+#endif
 
 #ifndef MDKLOADER_GENERATE_MDKAPI
 #define MDKLOADER_GENERATE_MDKAPI(funcName, resultType, ...) \
@@ -41,11 +67,11 @@ namespace {
 
 #ifndef MDKLOADER_RESOLVE_ERROR
 #ifdef _DEBUG
-#define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) Q_ASSERT_X(m_lp##funcName, __FUNCTION__, errMsg);
+#define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) assert(m_lp##funcName);
 #else
 #define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) \
     if (!m_lp##funcName) { \
-        qCritical().noquote() << "Failed to resolve symbol" << #funcName << ':' << errMsg; \
+        std::cerr << "Failed to resolve symbol" << #funcName << ':' << errMsg << std::endl; \
     }
 #endif
 #endif
@@ -53,8 +79,9 @@ namespace {
 #ifndef MDKLOADER_RESOLVE_MDKAPI
 #define MDKLOADER_RESOLVE_MDKAPI(funcName) \
     if (!m_lp##funcName) { \
-        m_lp##funcName = reinterpret_cast<_MDKLOADER_MDKAPI_##funcName>(mdkLib.resolve(#funcName)); \
-        MDKLOADER_RESOLVE_ERROR(funcName, qUtf8Printable(mdkLib.errorString())) \
+        m_lp##funcName = reinterpret_cast<_MDKLOADER_MDKAPI_##funcName>( \
+            MDKLOADER_GETPROCADDRESS(mdkLib, #funcName)); \
+        MDKLOADER_RESOLVE_ERROR(funcName, "") \
     }
 #endif
 
@@ -69,6 +96,8 @@ namespace {
 #define MDKLOADER_EXECUTE_MDKAPI_RETURN(funcName, defVal, ...) \
     return m_lp##funcName ? m_lp##funcName(__VA_ARGS__) : defVal;
 #endif
+
+MDK_HANDLE mdkLib = nullptr;
 
 // global.h
 MDKLOADER_GENERATE_MDKAPI(MDK_javaVM, void *, void *)
@@ -106,26 +135,43 @@ MDKLOADER_GENERATE_MDKAPI(MDK_foreignGLContextDestroyed, void)
 MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_new, mdkVideoFrameAPI *, int, int, MDK_PixelFormat)
 MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_delete, void, mdkVideoFrameAPI **)
 
-QLibrary mdkLib;
-
 } // namespace
 
 void mdkloader_setMdkLibName(const char *value)
 {
     if (value) {
-        mdkLib.setFileName(QString::fromUtf8(value));
+#ifdef MDK_WINDOWS
+        mdkLib = LoadLibraryA(value);
+#else
+        mdkLib = dlopen(value, RTLD_LAZY);
+#endif
+        if (!mdkLib) {
+            std::cerr << "Failed to load MDK library." << std::endl;
+        }
     } else {
-        qDebug().noquote() << "Failed to set MDK library name: empty file name.";
+        std::cerr << "Failed to set MDK library name: empty file name." << std::endl;
     }
 }
 
 const char *mdkloader_mdkLibName()
 {
-    return qUtf8Printable(mdkLib.fileName());
+    if (!mdkLib) {
+        return nullptr;
+    }
+#ifdef MDK_WINDOWS
+    char *path = new char[MAX_PATH];
+    GetModuleFileNameA(mdkLib, path, MAX_PATH);
+    return path;
+#else
+#endif
 }
 
 bool mdkloader_initMdk()
 {
+    if (!mdkLib) {
+        std::cerr << "Failed to initialize MDK: the library is not loaded." << std::endl;
+        return false;
+    }
     // global.h
     MDKLOADER_RESOLVE_MDKAPI(MDK_javaVM)
     MDKLOADER_RESOLVE_MDKAPI(MDK_setLogLevel)
@@ -151,9 +197,9 @@ bool mdkloader_initMdk()
     MDKLOADER_RESOLVE_MDKAPI(mdkVideoFrameAPI_delete)
     const bool ret = mdkloader_isMdkLoaded();
     if (ret) {
-        qDebug().noquote() << "MDK library has been loaded successfully.";
+        std::cout << "MDK library has been initialized successfully." << std::endl;
     } else {
-        qWarning().noquote() << "Failed to load MDK library.";
+        std::cerr << "Failed to initialize MDK library." << std::endl;
     }
     return ret;
 }
@@ -176,6 +222,17 @@ bool mdkloader_isMdkLoaded()
 int mdkloader_mdkVersion()
 {
     MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_version, MDK_VERSION)
+}
+
+void mdkloader_close()
+{
+    if (mdkLib) {
+#ifdef MDK_WINDOWS
+        FreeLibrary(mdkLib);
+#else
+        dlclose(mdkLib);
+#endif
+    }
 }
 
 ///////////////////////////////////////////
