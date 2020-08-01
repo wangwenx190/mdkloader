@@ -12,6 +12,12 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+if(WIN32)
+    set(CMAKE_DEBUG_POSTFIX d)
+else()
+    set(CMAKE_DEBUG_POSTFIX _debug)
+endif()
+
 find_package(Qt5 COMPONENTS Core REQUIRED)
 
 set(MDK_C_HEADERS
@@ -29,22 +35,36 @@ set(MDK_CXX_HEADERS
     mdk/VideoFrame.h
 )
 set(LOADER_SOURCES
+    mdkloader_global.h
     mdkloader.h
     mdkloader.cpp
 )
 
-add_library(libmdkloader STATIC
+if(WIN32 AND BUILD_SHARED_LIBS)
+    enable_language(RC)
+    list(APPEND LOADER_SOURCES mdkloader.rc)
+endif()
+
+add_library(libmdkloader
     ${MDK_C_HEADERS}
     ${MDK_CXX_HEADERS}
     ${LOADER_SOURCES}
 )
 
+set_target_properties(libmdkloader PROPERTIES OUTPUT_NAME MDKLoader)
+
+if(NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(libmdkloader PRIVATE
+        MDKLOADER_STATIC
+    )
+endif()
 if(MSVC)
     target_compile_options(libmdkloader PRIVATE /utf-8)
 endif()
 target_compile_definitions(libmdkloader PRIVATE
     QT_NO_CAST_FROM_ASCII
     QT_NO_CAST_TO_ASCII
+    MDKLOADER_BUILD_LIBRARY
 )
 target_compile_definitions(libmdkloader PUBLIC
     BUILD_MDK_STATIC

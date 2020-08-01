@@ -24,15 +24,17 @@
 
 #pragma once
 
+#include "mdkloader_global.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void mdkloader_setMdkLibName(const char *value);
-const char *mdkloader_mdkLibName();
-bool mdkloader_initMdk();
-bool mdkloader_isMdkLoaded();
-int mdkloader_mdkVersion();
+MDKLOADER_EXPORT void mdkloader_setMdkLibName(const char *value);
+MDKLOADER_EXPORT const char *mdkloader_mdkLibName();
+MDKLOADER_EXPORT bool mdkloader_initMdk();
+MDKLOADER_EXPORT bool mdkloader_isMdkLoaded();
+MDKLOADER_EXPORT int mdkloader_mdkVersion();
 
 #ifdef __cplusplus
 }
