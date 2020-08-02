@@ -30,12 +30,10 @@
 extern "C" {
 #endif
 
-MDKLOADER_EXPORT void mdkloader_setMdkLibName(const char *value);
-MDKLOADER_EXPORT const char *mdkloader_mdkLibName();
-MDKLOADER_EXPORT bool mdkloader_initMdk();
-MDKLOADER_EXPORT bool mdkloader_isMdkLoaded();
-MDKLOADER_EXPORT int mdkloader_mdkVersion();
-MDKLOADER_EXPORT void mdkloader_close();
+MDKLOADER_EXPORT bool mdkloader_load(const char *value);
+MDKLOADER_EXPORT bool mdkloader_isLoaded();
+MDKLOADER_EXPORT int mdkloader_version();
+MDKLOADER_EXPORT void mdkloader_cleanup();
 
 #ifdef __cplusplus
 }

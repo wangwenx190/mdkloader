@@ -67,11 +67,11 @@ namespace {
 
 #ifndef MDKLOADER_RESOLVE_ERROR
 #ifdef _DEBUG
-#define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) assert(m_lp##funcName);
+#define MDKLOADER_RESOLVE_ERROR(funcName) assert(m_lp##funcName);
 #else
-#define MDKLOADER_RESOLVE_ERROR(funcName, errMsg) \
+#define MDKLOADER_RESOLVE_ERROR(funcName) \
     if (!m_lp##funcName) { \
-        std::cerr << "Failed to resolve symbol" << #funcName << ':' << errMsg << std::endl; \
+        std::cerr << "Failed to resolve symbol" << #funcName << std::endl; \
     }
 #endif
 #endif
@@ -81,7 +81,7 @@ namespace {
     if (!m_lp##funcName) { \
         m_lp##funcName = reinterpret_cast<_MDKLOADER_MDKAPI_##funcName>( \
             MDKLOADER_GETPROCADDRESS(mdkLib, #funcName)); \
-        MDKLOADER_RESOLVE_ERROR(funcName, "") \
+        MDKLOADER_RESOLVE_ERROR(funcName) \
     }
 #endif
 
@@ -137,41 +137,29 @@ MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_delete, void, mdkVideoFrameAPI **)
 
 } // namespace
 
-void mdkloader_setMdkLibName(const char *value)
+bool mdkloader_load(const char *value)
 {
     if (value) {
 #ifdef MDK_WINDOWS
-        mdkLib = LoadLibraryA(value);
+        size_t newSize = strlen(value) + 1;
+        LPWSTR wValue = new WCHAR[newSize];
+        size_t convertedChars = 0;
+        mbstowcs_s(&convertedChars, wValue, newSize, value, _TRUNCATE);
+        mdkLib = LoadLibraryW(wValue);
+        delete[] wValue;
 #else
         mdkLib = dlopen(value, RTLD_LAZY);
 #endif
-        if (!mdkLib) {
-            std::cerr << "Failed to load MDK library." << std::endl;
-        }
-    } else {
-        std::cerr << "Failed to set MDK library name: empty file name." << std::endl;
     }
-}
-
-const char *mdkloader_mdkLibName()
-{
-    if (!mdkLib) {
-        return nullptr;
-    }
-#ifdef MDK_WINDOWS
-    char *path = new char[MAX_PATH];
-    GetModuleFileNameA(mdkLib, path, MAX_PATH);
-    return path;
+#ifdef _DEBUG
+    assert(mdkLib);
 #else
-#endif
-}
-
-bool mdkloader_initMdk()
-{
     if (!mdkLib) {
-        std::cerr << "Failed to initialize MDK: the library is not loaded." << std::endl;
+        std::cerr << "Failed to load the MDK library:" << value << std::endl;
         return false;
     }
+#endif
+    std::cout << "The MDK library has been loaded successfully." << std::endl;
     // global.h
     MDKLOADER_RESOLVE_MDKAPI(MDK_javaVM)
     MDKLOADER_RESOLVE_MDKAPI(MDK_setLogLevel)
@@ -195,16 +183,16 @@ bool mdkloader_initMdk()
     // VideoFrame.h
     MDKLOADER_RESOLVE_MDKAPI(mdkVideoFrameAPI_new)
     MDKLOADER_RESOLVE_MDKAPI(mdkVideoFrameAPI_delete)
-    const bool ret = mdkloader_isMdkLoaded();
+    const bool ret = mdkloader_isLoaded();
     if (ret) {
-        std::cout << "MDK library has been initialized successfully." << std::endl;
+        std::cout << "All MDK symbols have been resolved successfully." << std::endl;
     } else {
-        std::cerr << "Failed to initialize MDK library." << std::endl;
+        std::cerr << "Failed to resolve some MDK symbols." << std::endl;
     }
     return ret;
 }
 
-bool mdkloader_isMdkLoaded()
+bool mdkloader_isLoaded()
 {
     const bool globalLoaded = (m_lpMDK_javaVM && m_lpMDK_setLogLevel && m_lpMDK_logLevel
                                && m_lpMDK_setLogHandler && m_lpMDK_setGlobalOptionString
@@ -219,16 +207,18 @@ bool mdkloader_isMdkLoaded()
     return (globalLoaded && mediaInfoLoaded && playerLoaded && videoFrameLoaded);
 }
 
-int mdkloader_mdkVersion()
+int mdkloader_version()
 {
     MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_version, MDK_VERSION)
 }
 
-void mdkloader_close()
+void mdkloader_cleanup()
 {
     if (mdkLib) {
 #ifdef MDK_WINDOWS
-        FreeLibrary(mdkLib);
+        if (!FreeLibrary(mdkLib)) {
+            std::cerr << "Failed to unload the MDK library." << std::endl;
+        }
 #else
         dlclose(mdkLib);
 #endif
