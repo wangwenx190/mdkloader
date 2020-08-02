@@ -33,7 +33,7 @@
 #include "mdk/c/Player.h"
 #include "mdk/c/VideoFrame.h"
 #include "mdk/c/global.h"
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 #ifdef MDK_WINDOWS
 #include <windows.h>
