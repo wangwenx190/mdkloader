@@ -141,8 +141,8 @@ bool mdkloader_load(const char *value)
 {
     if (value) {
 #ifdef MDK_WINDOWS
-        size_t newSize = strlen(value) + 1;
-        LPWSTR wValue = new WCHAR[newSize];
+        const size_t newSize = strlen(value) + 1;
+        auto *wValue = new wchar_t[newSize];
         size_t convertedChars = 0;
         mbstowcs_s(&convertedChars, wValue, newSize, value, _TRUNCATE);
         mdkLib = LoadLibraryW(wValue);
@@ -194,6 +194,9 @@ bool mdkloader_load(const char *value)
 
 bool mdkloader_isLoaded()
 {
+    if (!mdkLib) {
+        return false;
+    }
     const bool globalLoaded = (m_lpMDK_javaVM && m_lpMDK_setLogLevel && m_lpMDK_logLevel
                                && m_lpMDK_setLogHandler && m_lpMDK_setGlobalOptionString
                                && m_lpMDK_setGlobalOptionInt32 && m_lpMDK_setGlobalOptionPtr
