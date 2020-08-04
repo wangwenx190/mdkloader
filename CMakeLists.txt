@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(mdkloader LANGUAGES CXX)
+project(MDKLoader LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,28 +37,29 @@ if(WIN32 AND BUILD_SHARED_LIBS)
     list(APPEND LOADER_SOURCES mdkloader.rc)
 endif()
 
-add_library(libmdkloader
+add_library(${PROJECT_NAME}
     ${MDK_C_HEADERS}
     ${MDK_CXX_HEADERS}
     ${LOADER_SOURCES}
 )
 
-set_target_properties(libmdkloader PROPERTIES OUTPUT_NAME MDKLoader)
-
 if(NOT BUILD_SHARED_LIBS)
-    target_compile_definitions(libmdkloader PUBLIC
+    target_compile_definitions(${PROJECT_NAME} PUBLIC
         MDKLOADER_STATIC
     )
 endif()
 if(MSVC)
-    target_compile_options(libmdkloader PRIVATE /utf-8)
+    target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
 endif()
-target_compile_definitions(libmdkloader PRIVATE
+target_compile_definitions(${PROJECT_NAME} PRIVATE
     MDKLOADER_BUILD_LIBRARY
 )
-target_compile_definitions(libmdkloader PUBLIC
+target_compile_definitions(${PROJECT_NAME} PUBLIC
     BUILD_MDK_STATIC
 )
-target_include_directories(libmdkloader PUBLIC
+if(UNIX)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dl)
+endif()
+target_include_directories(${PROJECT_NAME} PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>"
 )
