@@ -57,6 +57,12 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     BUILD_MDK_STATIC
 )
+if(WIN32)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        WIN32_LEAN_AND_MEAN
+        _CRT_SECURE_NO_WARNINGS
+    )
+endif()
 if(UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl)
 endif()
