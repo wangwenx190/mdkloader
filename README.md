@@ -7,10 +7,8 @@ Load MDK dynamically.
 ```cpp
 // Set the file name of MDK library.
 // Can have absolute or relative path.
-// Extension name is not needed.
-mdkloader_setMdkLibName("mdk");
-// Resolve MDK symbols.
-mdkloader_initMdk();
+// MDK will be loaded automatically.
+mdkloader_load("mdk");
 // Judge whether MDK is loaded successfully or not.
-Q_ASSERT(mdkloader_isMdkLoaded());
+Q_ASSERT(mdkloader_isLoaded());
 ```
