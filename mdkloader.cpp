@@ -71,7 +71,7 @@ namespace {
 #else
 #define MDKLOADER_RESOLVE_ERROR(funcName) \
     if (!m_lp##funcName) { \
-        std::cerr << "Failed to resolve symbol" << #funcName << std::endl; \
+        std::cerr << "MDKLoader: Failed to resolve symbol" << #funcName << std::endl; \
     }
 #endif
 #endif
@@ -155,11 +155,11 @@ bool mdkloader_load(const char *value)
     assert(mdkLib);
 #else
     if (!mdkLib) {
-        std::cerr << "Failed to load the MDK library:" << value << std::endl;
+        std::cerr << "MDKLoader: Failed to load the MDK library:" << value << std::endl;
         return false;
     }
 #endif
-    std::cout << "The MDK library has been loaded successfully." << std::endl;
+    std::cout << "MDKLoader: The MDK library has been loaded successfully." << std::endl;
     // global.h
     MDKLOADER_RESOLVE_MDKAPI(MDK_javaVM)
     MDKLOADER_RESOLVE_MDKAPI(MDK_setLogLevel)
@@ -185,9 +185,9 @@ bool mdkloader_load(const char *value)
     MDKLOADER_RESOLVE_MDKAPI(mdkVideoFrameAPI_delete)
     const bool ret = mdkloader_isLoaded();
     if (ret) {
-        std::cout << "All MDK symbols have been resolved successfully." << std::endl;
+        std::cout << "MDKLoader: All MDK symbols have been resolved successfully." << std::endl;
     } else {
-        std::cerr << "Failed to resolve some MDK symbols." << std::endl;
+        std::cerr << "MDKLoader: Failed to resolve some MDK symbols." << std::endl;
     }
     return ret;
 }
@@ -220,7 +220,7 @@ void mdkloader_cleanup()
     if (mdkLib) {
 #ifdef MDK_WINDOWS
         if (!FreeLibrary(mdkLib)) {
-            std::cerr << "Failed to unload the MDK library." << std::endl;
+            std::cerr << "MDKLoader: Failed to unload the MDK library." << std::endl;
         }
 #else
         dlclose(mdkLib);
