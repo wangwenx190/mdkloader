@@ -139,21 +139,12 @@ MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_delete, void, mdkVideoFrameAPI **)
 
 bool mdkloader_load(const char *value)
 {
-    if (value) {
+    assert(value);
 #ifdef MDK_WINDOWS
-        const size_t newSize = strlen(value) + 1;
-        auto *wValue = new wchar_t[newSize];
-        size_t convertedChars = 0;
-        mbstowcs_s(&convertedChars, wValue, newSize, value, _TRUNCATE);
-        mdkLib = LoadLibraryW(wValue);
-        delete[] wValue;
+    mdkLib = LoadLibraryA(value);
 #else
-        mdkLib = dlopen(value, RTLD_LAZY);
+    mdkLib = dlopen(value, RTLD_LAZY);
 #endif
-    }
-#ifdef _DEBUG
-    assert(mdkLib);
-#else
     if (!mdkLib) {
         std::cerr << "MDKLoader: Failed to load the MDK library:" << value << std::endl;
         return false;
