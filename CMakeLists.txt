@@ -18,6 +18,7 @@ set(MDK_C_HEADERS
     mdk/c/Player.h
     mdk/c/RenderAPI.h
     mdk/c/VideoFrame.h
+    mdk/c/module.h
 )
 set(MDK_CXX_HEADERS
     mdk/global.h

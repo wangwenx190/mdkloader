@@ -128,12 +128,12 @@ MDKLOADER_GENERATE_MDKAPI(MDK_VideoStreamMetadata,
                           mdkStringMapEntry *)
 MDKLOADER_GENERATE_MDKAPI(MDK_MediaMetadata, bool, const mdkMediaInfo *, mdkStringMapEntry *)
 // Player.h
-MDKLOADER_GENERATE_MDKAPI(mdkPlayerAPI_new, mdkPlayerAPI *)
-MDKLOADER_GENERATE_MDKAPI(mdkPlayerAPI_delete, void, mdkPlayerAPI **)
+MDKLOADER_GENERATE_MDKAPI(mdkPlayerAPI_new, const mdkPlayerAPI *)
+MDKLOADER_GENERATE_MDKAPI(mdkPlayerAPI_delete, void, const struct mdkPlayerAPI **)
 MDKLOADER_GENERATE_MDKAPI(MDK_foreignGLContextDestroyed, void)
 // VideoFrame.h
-MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_new, mdkVideoFrameAPI *, int, int, MDK_PixelFormat)
-MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_delete, void, mdkVideoFrameAPI **)
+MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_new, mdkVideoFrameAPI *, int, int, enum MDK_PixelFormat)
+MDKLOADER_GENERATE_MDKAPI(mdkVideoFrameAPI_delete, void, struct mdkVideoFrameAPI **)
 
 } // namespace
 
@@ -149,7 +149,6 @@ bool mdkloader_load(const char *value)
         std::cerr << "MDKLoader: Failed to load the MDK library:" << value << std::endl;
         return false;
     }
-#endif
     std::cout << "MDKLoader: The MDK library has been loaded successfully." << std::endl;
     // global.h
     MDKLOADER_RESOLVE_MDKAPI(MDK_javaVM)
@@ -284,17 +283,19 @@ bool MDK_VideoStreamMetadata(const mdkVideoStreamInfo *vsi, mdkStringMapEntry *s
     MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_VideoStreamMetadata, false, vsi, sme)
 }
 
-bool MDK_MediaMetadata(const mdkMediaInfo *mi, mdkStringMapEntry *sme){
-    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_MediaMetadata, false, mi, sme)}
+bool MDK_MediaMetadata(const mdkMediaInfo *mi, mdkStringMapEntry *sme)
+{
+    MDKLOADER_EXECUTE_MDKAPI_RETURN(MDK_MediaMetadata, false, mi, sme)
+}
 
 // Player.h
 
-mdkPlayerAPI *mdkPlayerAPI_new()
+const mdkPlayerAPI *mdkPlayerAPI_new()
 {
     MDKLOADER_EXECUTE_MDKAPI_RETURN(mdkPlayerAPI_new, nullptr)
 }
 
-void mdkPlayerAPI_delete(mdkPlayerAPI **value)
+void mdkPlayerAPI_delete(const struct mdkPlayerAPI **value)
 {
     MDKLOADER_EXECUTE_MDKAPI(mdkPlayerAPI_delete, value)
 }
@@ -303,12 +304,12 @@ void MDK_foreignGLContextDestroyed(){MDKLOADER_EXECUTE_MDKAPI(MDK_foreignGLConte
 
 // VideoFrame.h
 
-mdkVideoFrameAPI *mdkVideoFrameAPI_new(int w, int h, MDK_PixelFormat f)
+mdkVideoFrameAPI *mdkVideoFrameAPI_new(int w, int h, enum MDK_PixelFormat f)
 {
     MDKLOADER_EXECUTE_MDKAPI_RETURN(mdkVideoFrameAPI_new, nullptr, w, h, f)
 }
 
-void mdkVideoFrameAPI_delete(mdkVideoFrameAPI **value)
+void mdkVideoFrameAPI_delete(struct mdkVideoFrameAPI **value)
 {
     MDKLOADER_EXECUTE_MDKAPI(mdkVideoFrameAPI_delete, value)
 }

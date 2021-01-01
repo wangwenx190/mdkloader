@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2016-2020 WangBin <wbsecg1 at gmail.com>
  * This file is part of MDK
- * MDK SDK: https://sourceforge.net/projects/mdk-sdk/files
+ * MDK SDK: https://github.com/wang-bin/mdk-sdk
  * Free for GPL softwares or non-commercial use.
  *
  * The above copyright notice and this permission notice shall be included
@@ -38,7 +38,7 @@ class VideoFrame;
 class Player
 {
 public:
-    // MUST be called when a foreign OpenGL context previously used is being destroyed to release context resources. The context MUST be current.
+    // deprecated! MUST be called when a foreign OpenGL context previously used is being destroyed to release context resources. The context MUST be current.
     static void foreignGLContextDestroyed() {
         MDK_foreignGLContextDestroyed();
     }
@@ -58,7 +58,11 @@ public:
         MDK_CALL(p, setVolume, value);
     }
 
-    // MUST call setActiveTracks() after setMedia(), otherwise the 1st track in the media is used
+/*!
+  \brief setMedia
+  Set a new media url. Current playback is not affected.
+  // MUST call setActiveTracks() after setMedia(), otherwise the 1st track in the media is used
+ */
     void setMedia(const char* url) {
         MDK_CALL(p, setMedia, url);
     }
@@ -81,12 +85,16 @@ public:
   Gapless play the next media after current media playback end
   \param flags seek flags if startPosition > 0, accurate or fast
   setState(State::Stopped) only stops current media. Call setNextMedia(nullptr, -1) first to disable next media.
-  Usually call `currentMediaChanged()` first and `setNextMedia()` is called in the callback, then call `setMedia()`
+  Usually you can call `currentMediaChanged()` to set a callback which invokes `setNextMedia()`, then call `setMedia()`.
 */
     void setNextMedia(const char* url, int64_t startPosition = 0, SeekFlag flags = SeekFlag::FromStart) {
         MDK_CALL(p, setNextMedia, url, startPosition, MDKSeekFlag(flags));
     }
-
+/*!
+  \brief currentMediaChanged
+  Set a callback which is invoked when current media is stopped and a new media is about to play, or when setMedia() is called.
+  Call before setMedia() to take effect.
+ */
     void currentMediaChanged(std::function<void()> cb) { // call before setMedia()
         current_cb_ = cb;
         mdkCurrentMediaChangedCallback callback;
@@ -167,7 +175,7 @@ public:
 
 /*!
   \brief setState
-  request a new state.
+  Request a new state. It's async and may take effect later.
   setState(State::Stopped) only stops current media. Call setNextMedia(nullptr, -1) before stop to disable next media.
   setState(State::Stopped) will release all resouces and clear video renderer viewport. While a normal playback end will keep renderer resources
   and the last video frame. Manually call setState(State::Stopped) to clear them.
@@ -206,7 +214,7 @@ public:
 /*!
   \brief onMediaStatusChanged
   Add a callback to be invoked when MediaStatus is changed
-  \param cb null to clear callbacks
+  \param cb null to clear callbacks. return true
  */
     Player& onMediaStatusChanged(std::function<bool(MediaStatus)> cb) {
         status_cb_ = cb;
@@ -250,7 +258,7 @@ public:
 
 // vo_opaque: a ptr to identify the renderer. can be null, then it is the default vo/renderer.
     struct SnapshotRequest {
-/* data: rgba data. Created internally or provided by user.
+/* data: rgba or bgra data. Created internally or provided by user.
    If data is provided by user, stride,  height and width MUST be also set, and data MUST be valid until snapshot callback is finished.
  */
         uint8_t* data = nullptr;
@@ -321,7 +329,10 @@ public:
 /*
   \brief setVideoSurfaceSize
   Window size, surface size or drawable size. Render callback(if exists) will be invoked if width and height > 0.
-  If width or heigh < 0, corresponding video renderer (for vo_opaque) will be removed. But subsequence call with this vo_opaque will create renderer again. So it can be used before destroying the renderer.
+NOTE:
+  If width or heigh < 0, corresponding video renderer (for vo_opaque) will be removed and gfx resources will be released(need the context to be current for GL).
+  But subsequence call with this vo_opaque will create renderer again. So it can be used before destroying the renderer.
+  OpenGL: resources will never be released if setVideoSurfaceSize(-1, -1) is not called or not called in correct context.
  */
     void setVideoSurfaceSize(int width, int height, void* vo_opaque = nullptr) {
         MDK_CALL(p, setVideoSurfaceSize, width, height, vo_opaque);
@@ -503,14 +514,14 @@ public:
 /*
   \brief bufferRange
   set duration range of buffered data.
-  minMs: default 4000. wait for buffered duration >= minMs when before popping a packet from to decode
-  maxMs: default 16000. max buffered duration.
+  minMs: default 1000. wait for buffered duration >= minMs when before popping a packet from to decode
+  maxMs: default 2000. max buffered duration.
   drop = true: drop old non-key frame packets to reduce buffered duration until < maxMs.
   drop = false: wait for buffered duration < maxMs before pushing packets
 
   Usually you don't need to call this api. This api can be used for low latency live videos, for example setBufferRange(0, 1000, true) will decode as soon as possible when media data received, also it ensures the max delay of rendered video is 1s, and no accumulated delay.
  */
-    void setBufferRange(int64_t minMs = 4000, int64_t maxMs = 16000, bool drop = false) {
+    void setBufferRange(int64_t minMs = 1000, int64_t maxMs = 2000, bool drop = false) {
         MDK_CALL(p, setBufferRange, minMs, maxMs, drop);
     }
 /*!
@@ -663,7 +674,7 @@ public:
         return *this;
     }
 private:
-    mdkPlayerAPI* p = nullptr;
+    const mdkPlayerAPI* p = nullptr;
     std::function<void()> current_cb_ = nullptr;
     std::function<bool(int64_t ms)> timeout_cb_ = nullptr;
     std::function<bool(int64_t position, bool* boost)> prepare_cb_ = nullptr;

@@ -1,21 +1,20 @@
 /*
  * Copyright (c) 2019-2020 WangBin <wbsecg1 at gmail.com>
  * This file is part of MDK
- * MDK SDK: https://sourceforge.net/projects/mdk-sdk/files
+ * MDK SDK: https://github.com/wang-bin/mdk-sdk
  * Free for GPL softwares or non-commercial use.
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
  */
 #pragma once
-#include <inttypes.h>
-#include <limits.h>
+#include <stdint.h>
 
 #define MDK_VERSION_INT(major, minor, patch) \
     (((major&0xff)<<16) | ((minor&0xff)<<8) | (patch&0xff))
 #define MDK_MAJOR 0
 #define MDK_MINOR 10
-#define MDK_MICRO 0
+#define MDK_MICRO 3
 #define MDK_VERSION MDK_VERSION_INT(MDK_MAJOR, MDK_MINOR, MDK_MICRO)
 #define MDK_VERSION_CHECK(a, b, c) (MDK_VERSION >= MDK_VERSION_INT(a, b, c))
 
@@ -117,7 +116,7 @@ typedef enum MDKSeekFlag {
   \brief VideoEffect
   per video renderer effect. set via Player.setVideoEffect(MDK_VideoEffect effect, const float*);
  */
-enum class MDK_VideoEffect {
+enum MDK_VideoEffect {
     MDK_VideoEffect_Brightness,   /* [-1.0f, 1.0f], default 0 */
     MDK_VideoEffect_Contrast,     /* [-1.0f, 1.0f], default 0 */
     MDK_VideoEffect_Hue,          /* [-1.0f, 1.0f], default 0 */
